@@ -19,36 +19,8 @@ gui.Parent = player:WaitForChild("PlayerGui")
 local api = loadstring(game:HttpGet("https://sdkapi-public.luarmor.net/library.lua"))()
 loadstring(game:HttpGetAsync("https://raw.githubusercontent.com/NoLag-id/No-Lag-HUB/refs/heads/main/untitled.lua"))()
 
-isLoad = false
-local keyFilePath = "Duy.txt"
-local colors = {
-    background = Color3.fromRGB(20, 20, 25),
-    header = Color3.fromRGB(15, 15, 20),
-    primary = Color3.fromRGB(40, 40, 50),
-    accent = Color3.fromRGB(255, 255, 255),
-    text = Color3.fromRGB(240, 240, 240),
-    error = Color3.fromRGB(255, 85, 85),
-    success = Color3.fromRGB(85, 255, 85),
-    discord = Color3.fromRGB(88, 101, 242)
-}
 
-local function showNotification(text, color)
-    color = color or colors.text
-    local screenGui = gui:FindFirstChild("NotificationGui") or Instance.new("ScreenGui")
-    screenGui.Name = "NotificationGui"
-    screenGui.Parent = gui
-    screenGui.ResetOnSpawn = false
-    screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
-    local notification = Instance.new("Frame")
-    notification.Name = "Notification"
-    notification.BackgroundColor3 = colors.background
-    notification.BackgroundTransparency = 0.2
-    notification.BorderSizePixel = 0
-    notification.Size = UDim2.new(0.25, 0, 0.06, 0)
-    notification.Position = UDim2.new(0.85, 0, 0.85, 0)
-    notification.AnchorPoint = Vector2.new(0.5, 0.5)
-    notification.Parent = screenGui
 
     local uiCorner = Instance.new("UICorner")
     uiCorner.CornerRadius = UDim.new(0, 8)
