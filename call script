@@ -1,2 +1,2 @@
-print("ok")
 loadstring(game:HttpGet(("https://raw.githubusercontent.com/anhduybeo195/SV-skibidi/refs/heads/main/main.lua"))()
+print("success")
