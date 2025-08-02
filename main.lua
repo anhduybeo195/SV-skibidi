@@ -1,13 +1,23 @@
+-- 📦 Cấu hình
+local SELL_PRICE_PER_FRUIT = 5
+local SELL_THRESHOLD = 200
 
-local SELL_THRESHOLD = 200 -- Bán khi vượt quá 200 trái cây
+-- 🧠 Dịch vụ
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
 
--- 🧠 Khởi tạo GUI
-local player = game.Players.LocalPlayer
-local playerGui = player:WaitForChild("PlayerGui")
+-- 🧍 Lấy LocalPlayer an toàn
+local player = Players.LocalPlayer
+while not player or not player:IsDescendantOf(game) do
+    RunService.RenderStepped:Wait()
+    player = Players.LocalPlayer
+end
 
+-- 🖥️ Tạo GUI
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "AutoSellUI"
-screenGui.Parent = playerGui
+screenGui.ResetOnSpawn = false
+screenGui.Parent = player:WaitForChild("PlayerGui")
 
 local mainFrame = Instance.new("Frame")
 mainFrame.Size = UDim2.new(0, 300, 0, 200)
@@ -36,7 +46,7 @@ sellAllToggle.Font = Enum.Font.SourceSans
 sellAllToggle.TextSize = 18
 sellAllToggle.Parent = mainFrame
 
--- 🔘 Nút: Bán khi kho vượt 200
+-- 🔘 Nút: Bán khi kho > 200
 local sellFullToggle = Instance.new("TextButton")
 sellFullToggle.Text = "📦 Bán khi kho > 200"
 sellFullToggle.Size = UDim2.new(1, -20, 0, 40)
@@ -63,12 +73,15 @@ end)
 
 -- 📊 Hàm kiểm tra kho
 local function getFruitInventory()
-    return player:WaitForChild("FruitInventory")
+    return player:FindFirstChild("FruitInventory")
 end
 
 local function getTotalFruitCount()
+    local inventory = getFruitInventory()
+    if not inventory then return 0 end
+
     local total = 0
-    for _, fruit in pairs(getFruitInventory():GetChildren()) do
+    for _, fruit in pairs(inventory:GetChildren()) do
         if fruit:IsA("IntValue") then
             total += fruit.Value
         end
@@ -83,8 +96,9 @@ end
 -- 💰 Hàm bán trái cây
 local function sellFruits()
     local inventory = getFruitInventory()
-    local totalSold = 0
+    if not inventory then return end
 
+    local totalSold = 0
     for _, fruit in pairs(inventory:GetChildren()) do
         if fruit:IsA("IntValue") and fruit.Value > 0 then
             totalSold += fruit.Value
@@ -92,7 +106,6 @@ local function sellFruits()
         end
     end
 
-    -- Cộng tiền
     local leaderstats = player:FindFirstChild("leaderstats")
     if leaderstats and leaderstats:FindFirstChild("Coins") then
         leaderstats.Coins.Value += totalSold * SELL_PRICE_PER_FRUIT
@@ -102,10 +115,10 @@ local function sellFruits()
 end
 
 -- 🔁 Kiểm tra liên tục
-game:GetService("RunService").RenderStepped:Connect(function()
+RunService.RenderStepped:Connect(function()
     if autoSellAll then
         sellFruits()
     elseif autoSellWhenFull and isInventoryOverLimit() then
         sellFruits()
     end
-end
+end)
