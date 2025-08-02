@@ -1,108 +1,67 @@
--- 🧠 Dịch vụ
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
+--------------------------------------------------------------------
+-- CONFIG – chỉnh 3 giá trị này là xong
+--------------------------------------------------------------------
+local REMOTE_PATH     = "ReplicatedStorage.Sell_Inventory" -- đường dẫn RemoteEvent bán
+local REMOTE_ARGS     = {}                                 -- {arg1, arg2, ...} nếu server cần
+local ITEM_CONTAINERS = {"Backpack", "Character"}          -- nơi chứa trái cây
+--------------------------------------------------------------------
 
--- 🧍 Lấy LocalPlayer an toàn
-local player = Players.LocalPlayer
-while not player or not player:IsDescendantOf(game) do
-    RunService.RenderStepped:Wait()
-    player = Players.LocalPlayer
+local plr         = game:GetService("Players").LocalPlayer
+local runService  = game:GetService("RunService")
+local remote      = REMOTE_PATH:split(".")
+for i = 1, #remote-1 do
+    remote = game:GetService(remote[i]) or plr[remote[i]] or remote[i]
 end
+remote = remote[#remote]
 
--- 🖥️ Tạo GUI
-local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "AutoSellUI"
-screenGui.ResetOnSpawn = false
-screenGui.Parent = player:WaitForChild("PlayerGui")
+--------------------------------------------------------------------
+-- UI toggle
+--------------------------------------------------------------------
+local ui = Instance.new("ScreenGui", plr.PlayerGui)
+ui.Name, ui.ResetOnSpawn = "AutoSellAll_GUI", false
 
-local mainFrame = Instance.new("Frame")
-mainFrame.Size = UDim2.new(0, 300, 0, 200)
-mainFrame.Position = UDim2.new(0.5, -150, 0.5, -100) -- ✅ nằm giữa màn hình
-mainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-mainFrame.BorderSizePixel = 0
-mainFrame.Active = true
-mainFrame.Draggable = true -- ✅ cho phép kéo
-mainFrame.Parent = screenGui
+local btn = Instance.new("TextButton", ui)
+btn.Size = UDim2.fromOffset(160, 40)
+btn.Position = UDim2.new(0.5, -80, 0.5, -20)
+btn.Text = "🔁 Auto Sell: OFF"
+btn.BackgroundColor3 = Color3.fromRGB(60,60,60)
+btn.TextColor3, btn.Font, btn.TextSize = Color3.new(1,1,1), Enum.Font.GothamBold, 16
+btn.Active, btn.Draggable = true, true
 
-local title = Instance.new("TextLabel")
-title.Text = "Auto Sell"
-title.Size = UDim2.new(1, 0, 0, 40)
-title.BackgroundTransparency = 1
-title.TextColor3 = Color3.fromRGB(255, 255, 255)
-title.Font = Enum.Font.SourceSansBold
-title.TextSize = 24
-title.Parent = mainFrame
-
--- 🔘 Nút: Tự động bán hết
-local sellAllToggle = Instance.new("TextButton")
-sellAllToggle.Text = "🔁 Tự động bán hết"
-sellAllToggle.Size = UDim2.new(1, -20, 0, 40)
-sellAllToggle.Position = UDim2.new(0, 10, 0, 50)
-sellAllToggle.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-sellAllToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
-sellAllToggle.Font = Enum.Font.SourceSans
-sellAllToggle.TextSize = 18
-sellAllToggle.Parent = mainFrame
-
--- 🔘 Nút: Bán khi kho > 200
-local sellFullToggle = Instance.new("TextButton")
-sellFullToggle.Text = "📦 Bán khi kho > 200"
-sellFullToggle.Size = UDim2.new(1, -20, 0, 40)
-sellFullToggle.Position = UDim2.new(0, 10, 0, 100)
-sellFullToggle.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-sellFullToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
-sellFullToggle.Font = Enum.Font.SourceSans
-sellFullToggle.TextSize = 18
-sellFullToggle.Parent = mainFrame
-
--- 🔄 Trạng thái
-local autoSellAll = false
-local autoSellWhenFull = false
-
-sellAllToggle.MouseButton1Click:Connect(function()
-    autoSellAll = not autoSellAll
-    sellAllToggle.BackgroundColor3 = autoSellAll and Color3.fromRGB(0, 170, 0) or Color3.fromRGB(40, 40, 40)
+local selling = false
+btn.MouseButton1Click:Connect(function()
+    selling = not selling
+    btn.Text = selling and "✅ Auto Sell: ON" or "🔁 Auto Sell: OFF"
+    btn.BackgroundColor3 = selling and Color3.fromRGB(0,170,0) or Color3.fromRGB(60,60,60)
 end)
 
-sellFullToggle.MouseButton1Click:Connect(function()
-    autoSellWhenFull = not autoSellWhenFull
-    sellFullToggle.BackgroundColor3 = autoSellWhenFull and Color3.fromRGB(0, 170, 0) or Color3.fromRGB(40, 40, 40)
-end)
-
--- 📊 Hàm kiểm tra kho
-local function getFruitInventory()
-    return player:FindFirstChild("FruitInventory")
-end
-
-local function getTotalFruitCount()
-    local inventory = getFruitInventory()
-    if not inventory then return 0 end
-    return #inventory:GetChildren()
-end
-
-local function isInventoryOverLimit()
-    return getTotalFruitCount() > 200
-end
-
--- 🧹 Hàm bán trái cây (xóa toàn bộ item)
-local function sellFruits()
-    local inventory = getFruitInventory()
-    if not inventory then return end
-
-    local totalSold = 0
-    for _, item in pairs(inventory:GetChildren()) do
-        item:Destroy()
-        totalSold += 1
+--------------------------------------------------------------------
+-- Core loop
+--------------------------------------------------------------------
+local function destroyLocalItems()
+    for _, containerName in ipairs(ITEM_CONTAINERS) do
+        local container = plr:FindFirstChild(containerName)
+        if container then
+            for _, it in ipairs(container:GetChildren()) do
+                if it:IsA("Tool") then
+                    it:Destroy()
+                end
+            end
+        end
     end
-
-    print("Đã bán " .. totalSold .. " trái cây.")
 end
 
--- 🔁 Kiểm tra liên tục
-RunService.RenderStepped:Connect(function()
-    if autoSellAll then
-        sellFruits()
-    elseif autoSellWhenFull and isInventoryOverLimit() then
-        sellFruits()
+local function sell()
+    -- 1) Thử gọi RemoteEvent
+    if typeof(remote) == "Instance" and remote:IsA("RemoteEvent") then
+        remote:FireServer(table.unpack(REMOTE_ARGS))
+    end
+    -- 2) Xoá local để chắc chắn trống kho
+    destroyLocalItems()
+end
+
+runService.Heartbeat:Connect(function()
+    if selling then
+        sell()
     end
 end)
