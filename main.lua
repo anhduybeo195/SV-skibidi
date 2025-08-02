@@ -102,47 +102,6 @@ local function showNotification(text, color)
     end)
 end
 
-local function saveKeyToFile(key)
-    if writefile then
-        pcall(function() writefile(keyFilePath, key) end)
-    end
-end
-
-local function readKeyFromFile()
-    if readfile and isfile and isfile(keyFilePath) then
-        local success, key = pcall(function() return readfile(keyFilePath) end)
-        if success and key and #key > 0 then
-            return key
-        end
-    end
-    return nil
-end
-
-local storedKey = readKeyFromFile()
-if storedKey then
-    script_key = storedKey
-end
-
-if script_key and script_key ~= "" and script_key ~= "your_key" then
-    local url = scripts[game.PlaceId]
-    if url then
-       api.script_id = url
-       local status = api.check_key(script_key)
-        if (status.code == "KEY_VALID") then
-            showNotification("Key is valid")
-            isLoad = true
-            saveKeyToFile(script_key)
-            api.load_script()
-            return
-        elseif (status.code == "KEY_HWID_LOCKED") then
-            showNotification("Key linked to a different HWID. Please reset it using our bot")
-        elseif (status.code == "KEY_INCORRECT") then
-            showNotification("Key is wrong, please input valid key or get new key!")
-        else
-            showNotification("Key check failed:" .. status.message .. " Code: " .. status.code)
-        end
-    end
-end
 
 if not isLoad then
     local function makeDraggable(frame, dragHandle)
@@ -178,20 +137,7 @@ if not isLoad then
         end)
     end
 
-    local keyFrame = Instance.new("Frame")
-    keyFrame.Name = "KeyFrame"
-    keyFrame.Size = UDim2.new(0, 400, 0, 220)
-    keyFrame.Position = UDim2.new(0.5, -200, 0.5, -110)
-    keyFrame.AnchorPoint = Vector2.new(0.5, 0.5)
-    keyFrame.BackgroundColor3 = colors.background
-    keyFrame.BackgroundTransparency = 0.2
-    keyFrame.BorderSizePixel = 0
-    keyFrame.ClipsDescendants = true
-    keyFrame.Parent = gui
 
-    local keyCorner = Instance.new("UICorner")
-    keyCorner.CornerRadius = UDim.new(0, 12)
-    keyCorner.Parent = keyFrame
 
     local glow = Instance.new("ImageLabel")
     glow.Name = "Glow"
@@ -217,17 +163,6 @@ if not isLoad then
     keyTitleCorner.CornerRadius = UDim.new(0, 12)
     keyTitleCorner.Parent = keyTitleBar
 
-    local keyTitle = Instance.new("TextLabel")
-    keyTitle.Name = "Title"
-    keyTitle.Size = UDim2.new(1, -40, 1, 0)
-    keyTitle.Position = UDim2.new(0, 20, 0, 0)
-    keyTitle.BackgroundTransparency = 1
-    keyTitle.Text = "NO LAG HUB - KEY SYSTEM"
-    keyTitle.TextColor3 = colors.accent
-    keyTitle.TextSize = 16
-    keyTitle.Font = Enum.Font.GothamBold
-    keyTitle.TextXAlignment = Enum.TextXAlignment.Left
-    keyTitle.Parent = keyTitleBar
 
     local keyCloseButton = Instance.new("ImageButton")
     keyCloseButton.Name = "CloseButton"
@@ -252,48 +187,6 @@ if not isLoad then
     inputCorner.CornerRadius = UDim.new(0, 8)
     inputCorner.Parent = inputFrame
 
-    local inputBox = Instance.new("TextBox")
-    inputBox.Name = "InputBox"
-    inputBox.Size = UDim2.new(1, -20, 1, -20)
-    inputBox.Position = UDim2.new(0, 10, 0, 10)
-    inputBox.BackgroundTransparency = 1
-    inputBox.PlaceholderText = "Enter your key here..."
-    inputBox.PlaceholderColor3 = Color3.fromRGB(150, 150, 150)
-    inputBox.Text = ""
-    inputBox.TextColor3 = colors.text
-    inputBox.TextSize = 18
-    inputBox.Font = Enum.Font.GothamMedium
-    inputBox.ClearTextOnFocus = false
-    inputBox.Parent = inputFrame
-
-    local submitButton = Instance.new("TextButton")
-    submitButton.Name = "SubmitButton"
-    submitButton.Size = UDim2.new(1, -40, 0, 40) -- Changed
-    submitButton.Position = UDim2.new(0, 20, 0, 120) -- Changed
-    submitButton.BackgroundColor3 = colors.primary
-    submitButton.BorderSizePixel = 0
-    submitButton.Text = "Check Key"
-    submitButton.TextColor3 = colors.text
-    submitButton.TextSize = 14
-    submitButton.Font = Enum.Font.GothamBold
-    submitButton.Parent = keyFrame
-
-    local submitCorner = Instance.new("UICorner")
-    submitCorner.CornerRadius = UDim.new(0, 8)
-    submitCorner.Parent = submitButton
-
-    local discordButton = Instance.new("TextButton")
-    discordButton.Name = "DiscordButton"
-    discordButton.Size = UDim2.new(1, -40, 0, 40)
-    discordButton.Position = UDim2.new(0, 20, 0, 170)
-    discordButton.BackgroundColor3 = colors.discord
-    discordButton.BorderSizePixel = 0
-    discordButton.Text = "Join Discord"
-    discordButton.TextColor3 = colors.text
-    discordButton.TextSize = 14
-    discordButton.Font = Enum.Font.GothamBold
-    discordButton.Parent = keyFrame
-
     local discordCorner = Instance.new("UICorner")
     discordCorner.CornerRadius = UDim.new(0, 8)
     discordCorner.Parent = discordButton
@@ -306,49 +199,6 @@ if not isLoad then
         tween:Play()
         tween.Completed:Wait()
         gui:Destroy()
-    end)
-
-    submitButton.MouseButton1Click:Connect(function()
-        local enteredKey = inputBox.Text
-        if enteredKey and #enteredKey > 10 then -- Basic check
-            keyFrame:Destroy()
-            task.spawn(function()
-                script_key = tostring(enteredKey)
-                local url = scripts[game.PlaceId]
-                if url then
-                    api.script_id = url
-                    local status = api.check_key(script_key)
-                    if (status.code == "KEY_VALID") then
-                        saveKeyToFile(script_key)
-                        api.load_script()
-                    elseif (status.code == "KEY_HWID_LOCKED") then
-                        showNotification("Key linked to a different HWID", colors.error)
-                    elseif (status.code == "KEY_INCORRECT") then
-                        showNotification("Invalid key", colors.error)
-                    else
-                        showNotification("Key check failed", colors.error)
-                    end
-                end
-            end)
-        else
-            local shake1 = TweenService:Create(inputFrame, TweenInfo.new(0.05), {Position = UDim2.new(0, 25, 0, 60)})
-            local shake2 = TweenService:Create(inputFrame, TweenInfo.new(0.05), {Position = UDim2.new(0, 15, 0, 60)})
-            local shake3 = TweenService:Create(inputFrame, TweenInfo.new(0.05), {Position = UDim2.new(0, 20, 0, 60)})
-            shake1:Play()
-            shake1.Completed:Wait()
-            shake2:Play()
-            shake2.Completed:Wait()
-            shake3:Play()
-            inputFrame.BackgroundColor3 = colors.error
-            showNotification("Invalid key", colors.error)
-            wait(0.5)
-            inputFrame.BackgroundColor3 = colors.primary
-        end
-    end)
-
-    discordButton.MouseButton1Click:Connect(function()
-        setclipboard("https://discord.gg/no-lag")
-        showNotification("Discord link copied!", colors.discord)
     end)
 
     makeDraggable(keyFrame, keyTitleBar)
