@@ -17,11 +17,11 @@ screenGui.Parent = player:WaitForChild("PlayerGui")
 
 local mainFrame = Instance.new("Frame")
 mainFrame.Size = UDim2.new(0, 300, 0, 200)
-mainFrame.Position = UDim2.new(0, 20, 0, 20)
+mainFrame.Position = UDim2.new(0.5, -150, 0.5, -100) -- ✅ nằm giữa màn hình
 mainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 mainFrame.BorderSizePixel = 0
 mainFrame.Active = true
-mainFrame.Draggable = true -- ✅ Cho phép kéo
+mainFrame.Draggable = true -- ✅ cho phép kéo
 mainFrame.Parent = screenGui
 
 local title = Instance.new("TextLabel")
